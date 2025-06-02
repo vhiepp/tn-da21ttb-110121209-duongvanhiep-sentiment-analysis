@@ -1,6 +1,8 @@
 from fastapi import FastAPI
-# from app.controllers import sentiment_controller
+from database import Base, engine
 
-app = FastAPI(title="PhoBERT Sentiment API")
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="AI Model Management API")
 
 # app.include_router(sentiment_controller.router, prefix="/sentiment")

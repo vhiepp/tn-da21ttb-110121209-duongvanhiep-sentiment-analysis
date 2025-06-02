@@ -1,2 +1,2 @@
-# bỏ tất cả thư mục __pycache__
 __pycache__/
+.env
