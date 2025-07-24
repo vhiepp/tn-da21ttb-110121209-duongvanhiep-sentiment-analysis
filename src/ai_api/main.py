@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from database import Base, engine
 from starlette.middleware.cors import CORSMiddleware
 from sockets.app import socket_app
+from controllers import predict_controller  
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,3 +18,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(predict_controller.router, prefix="/predict", tags=["predict"])
