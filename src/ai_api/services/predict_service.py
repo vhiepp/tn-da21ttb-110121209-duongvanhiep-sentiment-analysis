@@ -33,4 +33,4 @@ def predict_sentiment2(text):
 
     prob_percentages = probs.squeeze().tolist()
 
-    return predicted_class, prob_percentages[predicted_class]
+    return predicted_class, prob_percentages
