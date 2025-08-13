@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from database import Base, engine
+# from database import Base, engine
 from starlette.middleware.cors import CORSMiddleware
 from sockets.app import socket_app
 from controllers import predict_controller  
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI Model Management API")
 

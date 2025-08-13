@@ -2,6 +2,7 @@ import apiClient from "@/api/api-client";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { text } from "stream/consumers";
+import ProductPredict from "./ProductPredict";
 
 const labels: any = {
   negative: {
@@ -35,18 +36,23 @@ const FormSearch = () => {
   const formRef = useRef(null);
   const [warning, setWarning] = useState("");
   const [textPredict, setTextPredict] = useState("");
+  const [isUrl, setIsUrl] = useState<boolean | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [productId, setProductId] = useState<string | undefined>("");
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!formRef.current) return;
 
     const formData = new FormData(formRef.current as HTMLFormElement);
-    const text = formData.get("text1") as string;
+    let text = formData.get("text1") as string;
     if (!text) {
       setWarning("Vui lòng nhập đoạn văn bản hoặc đường dẫn sản phẩm!");
       return;
     }
+
+    // bỏ khoảng trống dư thừa
+    text = text.trim();
 
     // kiểm tra xem có bắt đầu từ http:// hoặc https:// không
     const isUrl = text.startsWith("http://") || text.startsWith("https://");
@@ -63,19 +69,27 @@ const FormSearch = () => {
         }
         // Nếu là URL hợp lệ, thì kiểm tra xem có phải là đường dẫn sản phẩm hay không
         if (
-          !text.includes("tiki.vn") &&
-          !text.includes("shopee.vn") &&
-          !text.includes("lazada.vn")
+          !text.includes("tiki.vn")
+          // !text.includes("shopee.vn") &&
+          // !text.includes("lazada.vn")
         ) {
-          setWarning(
-            "Đường dẫn phải là sản phẩm của Tiki, Shopee hoặc Lazada!"
-          );
+          setWarning("Đường dẫn phải là sản phẩm của Tiki!");
           return;
         }
       } catch (error) {
         setWarning("Đường dẫn không hợp lệ!");
         return;
       }
+
+      console.log("Đây là đường dẫn sản phẩm:", text);
+      setIsUrl(true);
+
+      const m = new URL(text).pathname.match(/-p(\d+)(?=\.html|$)/);
+      const id = m?.[1];
+      console.log(id);
+      setProductId(id);
+
+      return;
     }
     if (text.length > 512) {
       setWarning(
@@ -84,14 +98,10 @@ const FormSearch = () => {
       return;
     }
     if (text !== textPredict) {
+      setIsUrl(false);
       setTextPredict(text);
       setWarning("");
     }
-
-    // const url = new URL(window.location.href);
-    // url.searchParams.set("text", text);
-
-    // window.location.href = url.toString();
   };
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +135,7 @@ const FormSearch = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100">
-      <div className="mt-12 p-8">
+      <div className="mt-10 p-8">
         <h1 className="text-4xl font-bold text-center mb-15">
           Sentiment Analysis
         </h1>
@@ -144,20 +154,6 @@ const FormSearch = () => {
             className="rounded-lg"
             alt=""
           />
-          {/* <Image
-            src={"/logo/shopee.png"}
-            width={40}
-            height={40}
-            className="rounded-lg"
-            alt=""
-          />
-          <Image
-            src={"/logo/lazada.png"}
-            width={40}
-            height={40}
-            className="rounded-lg"
-            alt=""
-          /> */}
         </div>
         <form action="" onSubmit={handleSubmit} ref={formRef} method="get">
           <div className="flex justify-center border border-gray-300 p-0.5 pl-3 bg-white rounded-4xl relative">
@@ -196,50 +192,55 @@ const FormSearch = () => {
           </div>
         </form>
       </div>
-      <div className="w-[600px]">
-        {textPredict && (
-          <div className="p-4 bg-white rounded-lg shadow-md">
-            <p className="text-gray-700 text-justify mb-4">✍🏼 {textPredict}</p>
-            {!result && (
-              <div className="flex justify-center mb-4">
-                <img className="w-10 h-10" src="/loading.jpg" alt="" />
-              </div>
-            )}
-            {result && (
-              <>
-                <h2 className="text-xl font-semibold ">Kết quả phân tích:</h2>
-                <div className="text-center">
-                  <p className="text-8xl">
-                    {labels[result.predicted_class].emoji}
-                  </p>
-                  <p
-                    className={
-                      "text-2xl font-bold mt-1 " +
-                      labels[result.predicted_class].color
-                    }
-                  >
-                    {labels[result.predicted_class].name}
-                  </p>
+      {!isUrl && (
+        <div className="w-[600px]">
+          {textPredict && (
+            <div className="p-4 bg-white rounded-lg shadow-md">
+              <p className="text-gray-700 text-justify mb-4">
+                ✍🏼 {textPredict}
+              </p>
+              {!result && (
+                <div className="flex justify-center mb-4">
+                  <img className="w-10 h-10" src="/loading.jpg" alt="" />
                 </div>
-                <div className="w-full mt-8 flex gap-2 justify-between">
-                  {idx.map((cls) => (
-                    <div
-                      key={`label-${cls}`}
-                      className={`flex items-center gap-2 p-2 rounded-lg ${labels[cls].bgColor} ${labels[cls].color}`}
+              )}
+              {result && (
+                <>
+                  <h2 className="text-xl font-semibold ">Kết quả phân tích:</h2>
+                  <div className="text-center">
+                    <p className="text-8xl">
+                      {labels[result.predicted_class].emoji}
+                    </p>
+                    <p
+                      className={
+                        "text-2xl font-bold mt-1 " +
+                        labels[result.predicted_class].color
+                      }
                     >
-                      <span>{labels[cls].emoji}</span>
-                      <span>{labels[cls].name}</span>
-                      <span>
-                        {roundToPercentage(result.prob_percentages[cls])}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+                      {labels[result.predicted_class].name}
+                    </p>
+                  </div>
+                  <div className="w-full mt-8 flex gap-2 justify-between">
+                    {idx.map((cls) => (
+                      <div
+                        key={`label-${cls}`}
+                        className={`flex items-center gap-2 p-2 rounded-lg ${labels[cls].bgColor} ${labels[cls].color}`}
+                      >
+                        <span>{labels[cls].emoji}</span>
+                        <span>{labels[cls].name}</span>
+                        <span>
+                          {roundToPercentage(result.prob_percentages[cls])}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {isUrl && <ProductPredict id={productId} />}
     </div>
   );
 };
