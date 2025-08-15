@@ -1,7 +1,6 @@
 import apiClient from "@/api/api-client";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { text } from "stream/consumers";
 import ProductPredict from "./ProductPredict";
 
 const labels: any = {
@@ -87,8 +86,11 @@ const FormSearch = () => {
       const m = new URL(text).pathname.match(/-p(\d+)(?=\.html|$)/);
       const id = m?.[1];
       console.log(id);
+      if (!id) {
+        setWarning("Đường dẫn không hợp lệ!");
+        return;
+      }
       setProductId(id);
-
       return;
     }
     if (text.length > 512) {
@@ -206,7 +208,14 @@ const FormSearch = () => {
               )}
               {result && (
                 <>
-                  <h2 className="text-xl font-semibold ">Kết quả phân tích:</h2>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold ">
+                      Kết quả phân tích:
+                    </h2>
+                    <span className="text-md font-semibold">
+                      ~ {Number(result.time).toFixed(3)} giây
+                    </span>
+                  </div>
                   <div className="text-center">
                     <p className="text-8xl">
                       {labels[result.predicted_class].emoji}
